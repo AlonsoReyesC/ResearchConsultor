@@ -33,23 +33,30 @@ const MOCK_SUGGESTIONS: Suggestion[] = [
   {
     id: "s1",
     type: "risk",
-    title: "Sampling Bias Detected",
-    description: "Your sampling method 'convenience sampling' may introduce significant bias given your target demographic.",
-    rationale: "Convenience sampling limits generalizability. For a study on urban mobility, consider stratified random sampling to ensure representation across different city zones."
+    title: "Critical Methodological Flaw: Sampling Bias",
+    description: "Your proposed sampling method ('asking colleagues') is a form of convenience sampling that invalidates your ability to generalize to the broader urban population.",
+    rationale: "Convenience sampling limits external validity. For a study on city-wide mobility patterns, you must use a probabilistic sampling method (e.g., stratified random sampling) or explicitly frame this as an exploratory case study with limited scope."
   },
   {
     id: "s2",
     type: "improvement",
-    title: "Refine Specific Objective 2",
-    description: "The objective 'To understand how people feel' is too vague. Consider using measurable verbs.",
-    rationale: "Research objectives must be operationalizable. 'To analyze the correlation between commute time and self-reported stress levels' is scientifically measurable."
+    title: "Objective 2 is Not Measurable",
+    description: "The verb 'To understand' in 'To understand how people feel' is cognitive and unobservable. Research objectives must be operationalizable.",
+    rationale: "Change 'To understand' to 'To measure' or 'To analyze'. Example improvement: 'To analyze the correlation between weekly telecommuting hours and self-reported commuter stress levels using the Perceived Stress Scale (PSS-10).'"
   },
   {
     id: "s3",
+    type: "gap",
+    title: "Missing Theoretical Framework",
+    description: "You are linking 'traffic' and 'remote work' without a mediating variable. The literature suggests 'modal shift' is the key mechanism here.",
+    rationale: "Direct causality is hard to prove. Consider adopting the 'Activity-Based Travel Demand' theory to explain how flexible work schedules restructure—rather than just reduce—travel demand."
+  },
+  {
+    id: "s4",
     type: "citation",
-    title: "Relevant Literature Found",
-    description: "Consider reviewing 'Remote Work and Urban Form' by Anderson et al. (2023) for your framework.",
-    rationale: "This recent paper provides a validated scale for measuring the exact variable you are interested in, strengthening your theoretical framework."
+    title: "Foundational Literature Omitted",
+    description: "You cannot discuss remote work mobility without citing Mokhtarian (1990) or the recent post-pandemic work by Anderson et al. (2023).",
+    rationale: "Mokhtarian's 'Telecommuting and Travel' is the seminal work establishing the substitution vs. complementarity hypothesis. Ignoring it suggests a gap in your literature review."
   }
 ];
 
@@ -60,9 +67,9 @@ export default function ProjectPage() {
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [project, setProject] = useState<ProjectData>({
     title: "Impact of Remote Work on Urban Mobility Patterns",
-    problem: "The rise of remote work has changed how people move in cities. This project aims to study that change.",
-    objectives: "1. To study remote work.\n2. To understand how people feel about commuting.\n3. To see if traffic is better.",
-    methodology: "I will ask people in my office how they get to work and if they work from home. I will also look at traffic data."
+    problem: "I think traffic is getting better because everyone is working from home now. But some people say it's worse. I want to find out who is right because it affects my commute.",
+    objectives: "1. To see if remote work is good for the city.\n2. To understand how people feel about not driving to work anymore.\n3. To prove that working from home reduces pollution.",
+    methodology: "I will send a Google Form to my co-workers and ask them if they like working from home. I will also stand at the corner of Main St. for an hour on Monday to count cars."
   });
 
   const handleRunAnalysis = () => {
