@@ -157,3 +157,17 @@ export async function registerRoutes(
 
   return httpServer;
 }
+
+app.post("/api/login", async (req, res) => {
+  try {
+    const { username, password } = req.body;
+    // Simula login (en futuro agrega Passport real)
+    if (username === "demo" && password === "demo") {
+      res.json({ userId: "demo-user", message: "Login exitoso" });
+    } else {
+      res.status(401).json({ error: "Credenciales inválidas" });
+    }
+  } catch (error) {
+    res.status(500).json({ error: "Error en login" });
+  }
+});

@@ -4,6 +4,11 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, CheckCircle, Shield, BookOpen, Brain, Sparkles, Lock } from "lucide-react";
 import academicBg from "@assets/generated_images/minimalist_academic_abstract_background_with_connected_nodes.png";
 
+// Importamos los componentes que creamos
+import { LoginDialog } from "@/components/LoginDialog";
+import { EthicalManifesto } from "@/components/EthicalManifesto";
+import { HowItWorks } from "@/components/HowItWorks";
+
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-background text-foreground font-sans">
@@ -15,7 +20,8 @@ export default function LandingPage() {
             <span className="text-xl font-serif font-bold tracking-tight">Methodolog.AI</span>
           </div>
           <div className="flex gap-4 items-center">
-            <Link href="/login" className="text-sm font-medium hover:text-primary transition-colors">Log in</Link>
+            {/* Reemplazamos el link muerto por el modal real */}
+            <LoginDialog />
             <Link href="/app/dashboard">
               <Button>Try Consultant Demo <ArrowRight className="ml-2 h-4 w-4" /></Button>
             </Link>
@@ -29,28 +35,29 @@ export default function LandingPage() {
           <img src={academicBg} alt="Background" className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-b from-background via-transparent to-background"></div>
         </div>
-        
+       
         <div className="container mx-auto px-4 text-center max-w-4xl">
           <div className="inline-flex items-center rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-sm font-medium text-primary mb-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
             <Sparkles className="mr-2 h-3.5 w-3.5" />
             <span>Ethical AI for Academia</span>
           </div>
-          
+         
           <h1 className="text-5xl md:text-7xl font-serif font-bold tracking-tight text-foreground mb-6 animate-in fade-in slide-in-from-bottom-5 duration-700 delay-100">
             Your Research Consultant, <br />
             <span className="text-primary italic">Not Your Ghostwriter.</span>
           </h1>
-          
+         
           <p className="text-xl text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed animate-in fade-in slide-in-from-bottom-6 duration-700 delay-200">
-            Rigorous methodological guidance for researchers, thesis students, and faculty. 
+            Rigorous methodological guidance for researchers, thesis students, and faculty.
             We diagnose risks, refine objectives, and suggest improvements—without writing the project for you.
           </p>
-          
+         
           <div className="flex flex-col sm:flex-row gap-4 justify-center animate-in fade-in slide-in-from-bottom-7 duration-700 delay-300">
             <Link href="/app/dashboard">
               <Button size="lg" className="h-12 px-8 text-base">Start Project Diagnosis</Button>
             </Link>
-            <Button variant="outline" size="lg" className="h-12 px-8 text-base">How it Works</Button>
+            {/* Reemplazamos el botón muerto por el modal real */}
+            <HowItWorks />
           </div>
         </div>
       </section>
@@ -64,19 +71,18 @@ export default function LandingPage() {
               Our human-in-the-loop approach ensures you stay in control while elevating the quality of your research design.
             </p>
           </div>
-
           <div className="grid md:grid-cols-3 gap-8">
-            <FeatureCard 
+            <FeatureCard
               icon={<CheckCircle className="h-8 w-8 text-primary" />}
               title="Methodological Diagnosis"
               description="Identify weak points, methodological risks, and conceptual gaps in your research proposal before you submit."
             />
-            <FeatureCard 
+            <FeatureCard
               icon={<BookOpen className="h-8 w-8 text-primary" />}
               title="Bibliographic Support"
               description="Get recommendations for real, existing literature relevant to your topic. No hallucinations, only verified sources."
             />
-            <FeatureCard 
+            <FeatureCard
               icon={<Shield className="h-8 w-8 text-primary" />}
               title="Ethical & Transparent"
               description="We explain every suggestion. You decide what to accept. The intellectual authorship remains 100% yours."
@@ -94,7 +100,7 @@ export default function LandingPage() {
                 <Lock className="h-5 w-5" /> The "No-Ghostwriting" Guarantee
               </h3>
               <p className="text-muted-foreground mb-6">
-                Unlike generic LLMs that generate plausible but often hollow text, Methodolog.AI is built to <strong>guide</strong>. 
+                Unlike generic LLMs that generate plausible but often hollow text, Methodolog.AI is built to <strong>guide</strong>.
                 We provide the scaffolding for your critical thinking, offering questions and structural improvements rather than finished paragraphs.
               </p>
               <ul className="space-y-3">
@@ -118,7 +124,8 @@ export default function LandingPage() {
             <p className="text-lg text-muted-foreground mb-8">
               "The goal of research is discovery. If an AI does the discovery for you, you haven't learned anything. Methodolog.AI acts as a senior colleague—challenging your assumptions and refining your methods."
             </p>
-            <Button variant="outline">Read our Ethical Manifesto</Button>
+            {/* Reemplazamos el botón muerto por el modal real */}
+            <EthicalManifesto />
           </div>
         </div>
       </section>
