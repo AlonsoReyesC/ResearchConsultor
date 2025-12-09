@@ -1,23 +1,23 @@
 import React, { useState, useEffect } from "react";
-import { Link, useRoute } from "wouter";
+import { Link, useRoute, useParams } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { Brain, ChevronLeft, Save, Play, RefreshCw, Layers, BookOpen, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Brain, ChevronLeft, Save, RefreshCw, Layers, BookOpen, AlertCircle, CheckCircle2 } from "lucide-react";
 import { SuggestionCard } from "@/components/SuggestionCard";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
-// Types
 interface ProjectData {
+  id: string;
   title: string;
-  problem: string;
-  objectives: string;
-  methodology: string;
+  problem?: string | null;
+  objectives?: string | null;
+  literature?: string | null;
+  methodology?: string | null;
+  rigorScore?: number;
 }
 
 interface Suggestion {
@@ -26,87 +26,170 @@ interface Suggestion {
   title: string;
   description: string;
   rationale: string;
-  accepted?: boolean;
+  section?: string | null;
+  status: string;
 }
-
-const MOCK_SUGGESTIONS: Suggestion[] = [
-  {
-    id: "s1",
-    type: "risk",
-    title: "Critical Methodological Flaw: Sampling Bias",
-    description: "Your proposed sampling method ('asking colleagues') is a form of convenience sampling that invalidates your ability to generalize to the broader urban population.",
-    rationale: "Convenience sampling limits external validity. For a study on city-wide mobility patterns, you must use a probabilistic sampling method (e.g., stratified random sampling) or explicitly frame this as an exploratory case study with limited scope."
-  },
-  {
-    id: "s2",
-    type: "improvement",
-    title: "Objective 2 is Not Measurable",
-    description: "The verb 'To understand' in 'To understand how people feel' is cognitive and unobservable. Research objectives must be operationalizable.",
-    rationale: "Change 'To understand' to 'To measure' or 'To analyze'. Example improvement: 'To analyze the correlation between weekly telecommuting hours and self-reported commuter stress levels using the Perceived Stress Scale (PSS-10).'"
-  },
-  {
-    id: "s3",
-    type: "gap",
-    title: "Missing Theoretical Framework",
-    description: "You are linking 'traffic' and 'remote work' without a mediating variable. The literature suggests 'modal shift' is the key mechanism here.",
-    rationale: "Direct causality is hard to prove. Consider adopting the 'Activity-Based Travel Demand' theory to explain how flexible work schedules restructure—rather than just reduce—travel demand."
-  },
-  {
-    id: "s4",
-    type: "citation",
-    title: "Foundational Literature Omitted",
-    description: "You cannot discuss remote work mobility without citing Mokhtarian (1990) or the recent post-pandemic work by Anderson et al. (2023).",
-    rationale: "Mokhtarian's 'Telecommuting and Travel' is the seminal work establishing the substitution vs. complementarity hypothesis. Ignoring it suggests a gap in your literature review."
-  }
-];
 
 export default function ProjectPage() {
   const { toast } = useToast();
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const params = useParams();
+  const projectId = params.id as string;
   const [activeTab, setActiveTab] = useState("problem");
-  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
-  const [project, setProject] = useState<ProjectData>({
-    title: "Impact of Remote Work on Urban Mobility Patterns",
-    problem: "I think traffic is getting better because everyone is working from home now. But some people say it's worse. I want to find out who is right because it affects my commute.",
-    objectives: "1. To see if remote work is good for the city.\n2. To understand how people feel about not driving to work anymore.\n3. To prove that working from home reduces pollution.",
-    methodology: "I will send a Google Form to my co-workers and ask them if they like working from home. I will also stand at the corner of Main St. for an hour on Monday to count cars."
+  const queryClient = useQueryClient();
+
+  const [localProject, setLocalProject] = useState<ProjectData | null>(null);
+
+  const { data: project, isLoading: projectLoading } = useQuery({
+    queryKey: ["project", projectId],
+    queryFn: async () => {
+      const res = await fetch(`/api/projects/${projectId}`);
+      if (!res.ok) throw new Error("Failed to fetch project");
+      return res.json() as Promise<ProjectData>;
+    },
+    enabled: projectId !== "new"
   });
 
-  const handleRunAnalysis = () => {
-    setIsAnalyzing(true);
-    // Simulate AI analysis delay
-    setTimeout(() => {
-      setIsAnalyzing(false);
-      setSuggestions(MOCK_SUGGESTIONS);
+  const { data: suggestions = [], isLoading: suggestionsLoading } = useQuery({
+    queryKey: ["suggestions", projectId],
+    queryFn: async () => {
+      const res = await fetch(`/api/projects/${projectId}/suggestions`);
+      if (!res.ok) throw new Error("Failed to fetch suggestions");
+      return res.json() as Promise<Suggestion[]>;
+    },
+    enabled: projectId !== "new"
+  });
+
+  useEffect(() => {
+    if (project) {
+      setLocalProject(project);
+    } else if (projectId === "new") {
+      setLocalProject({
+        id: "new",
+        title: "New Research Project",
+        problem: "",
+        objectives: "",
+        literature: "",
+        methodology: "",
+        rigorScore: 0
+      });
+    }
+  }, [project, projectId]);
+
+  const saveMutation = useMutation({
+    mutationFn: async (data: Partial<ProjectData>) => {
+      if (projectId === "new") {
+        const res = await fetch("/api/projects", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...data, userId: "demo-user" })
+        });
+        if (!res.ok) throw new Error("Failed to create project");
+        return res.json();
+      } else {
+        const res = await fetch(`/api/projects/${projectId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data)
+        });
+        if (!res.ok) throw new Error("Failed to update project");
+        return res.json();
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["project", projectId] });
+      toast({ title: "Saved", description: "Project saved successfully" });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to save project", variant: "destructive" });
+    }
+  });
+
+  const diagnosisMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`/api/projects/${projectId}/diagnose`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" }
+      });
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || "Failed to diagnose project");
+      }
+      return res.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["suggestions", projectId] });
+      queryClient.invalidateQueries({ queryKey: ["project", projectId] });
       toast({
         title: "Analysis Complete",
-        description: "The consultant has identified 3 potential improvements.",
+        description: `Found ${data.suggestions.length} suggestions. Rigor Score: ${data.overallScore}/100`,
       });
-    }, 2000);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Diagnosis Failed",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  });
+
+  const updateSuggestionMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: string, status: string }) => {
+      const res = await fetch(`/api/suggestions/${id}/status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status })
+      });
+      if (!res.ok) throw new Error("Failed to update suggestion");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["suggestions", projectId] });
+    }
+  });
+
+  const handleSave = () => {
+    if (!localProject) return;
+    saveMutation.mutate(localProject);
+  };
+
+  const handleRunAnalysis = () => {
+    diagnosisMutation.mutate();
   };
 
   const handleAccept = (id: string) => {
-    setSuggestions(prev => prev.map(s => s.id === id ? { ...s, accepted: true } : s));
+    updateSuggestionMutation.mutate({ id, status: "accepted" });
     toast({
       title: "Suggestion Accepted",
       description: "Your project draft has been updated.",
     });
-    // In a real app, this would modify the text content
   };
 
   const handleReject = (id: string) => {
-    setSuggestions(prev => prev.map(s => s.id === id ? { ...s, accepted: false } : s));
+    updateSuggestionMutation.mutate({ id, status: "rejected" });
     toast({
       title: "Suggestion Rejected",
       description: "Suggestion dismissed.",
     });
   };
 
-  const activeSuggestions = suggestions.filter(s => s.accepted === undefined);
+  const updateField = (field: keyof ProjectData, value: string) => {
+    if (!localProject) return;
+    setLocalProject({ ...localProject, [field]: value });
+  };
+
+  const activeSuggestions = suggestions.filter(s => s.status === "pending");
+
+  if (projectLoading || !localProject) {
+    return (
+      <div className="h-screen flex items-center justify-center">
+        <RefreshCw className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="h-screen flex flex-col bg-background font-sans overflow-hidden">
-      {/* Header */}
       <header className="h-14 border-b border-border flex items-center justify-between px-4 bg-background z-20 shrink-0">
         <div className="flex items-center gap-4">
           <Link href="/app/dashboard">
@@ -115,31 +198,35 @@ export default function ProjectPage() {
             </Button>
           </Link>
           <div className="flex flex-col">
-            <span className="text-sm font-semibold truncate max-w-[300px]">{project.title}</span>
+            <span className="text-sm font-semibold truncate max-w-[300px]">{localProject.title}</span>
             <span className="text-[10px] text-muted-foreground flex items-center gap-1">
               <span className="w-1.5 h-1.5 rounded-full bg-yellow-500"></span> Draft Mode
             </span>
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="h-8 gap-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="h-8 gap-2"
+            onClick={handleSave}
+            disabled={saveMutation.isPending}
+          >
             <Save className="h-3.5 w-3.5" /> Save
           </Button>
           <Button 
             size="sm" 
             className="h-8 gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
             onClick={handleRunAnalysis}
-            disabled={isAnalyzing}
+            disabled={diagnosisMutation.isPending || projectId === "new"}
           >
-            {isAnalyzing ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Brain className="h-3.5 w-3.5" />}
-            {isAnalyzing ? "Analyzing..." : "Run Diagnosis"}
+            {diagnosisMutation.isPending ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Brain className="h-3.5 w-3.5" />}
+            {diagnosisMutation.isPending ? "Analyzing..." : "Run Diagnosis"}
           </Button>
         </div>
       </header>
 
-      {/* Main Workspace */}
       <div className="flex-1 flex overflow-hidden">
-        {/* Left Sidebar - Navigation */}
         <div className="w-64 border-r border-border bg-sidebar hidden md:flex flex-col">
           <div className="p-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
             Project Sections
@@ -171,17 +258,16 @@ export default function ProjectPage() {
             <div className="bg-background rounded-lg p-3 border border-border shadow-sm">
               <div className="text-xs font-medium text-muted-foreground mb-2">Overall Rigor Score</div>
               <div className="flex items-end gap-2 mb-1">
-                <span className="text-2xl font-bold font-serif text-primary">65</span>
+                <span className="text-2xl font-bold font-serif text-primary">{localProject.rigorScore || 0}</span>
                 <span className="text-xs text-muted-foreground mb-1">/ 100</span>
               </div>
               <div className="h-1.5 w-full bg-secondary rounded-full overflow-hidden">
-                <div className="h-full bg-yellow-500 w-[65%]"></div>
+                <div className="h-full bg-yellow-500 transition-all duration-500" style={{ width: `${localProject.rigorScore || 0}%` }}></div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Center - Editor */}
         <div className="flex-1 flex flex-col min-w-0 bg-background">
           <div className="p-6 max-w-3xl mx-auto w-full h-full flex flex-col">
             <div className="mb-6">
@@ -202,14 +288,13 @@ export default function ProjectPage() {
               <Textarea 
                 className="w-full h-full resize-none border-0 focus-visible:ring-0 p-4 text-base leading-relaxed font-serif text-foreground/90"
                 placeholder="Start writing your section here..."
-                value={project[activeTab as keyof ProjectData] || ""}
-                onChange={(e) => setProject({...project, [activeTab]: e.target.value})}
+                value={(localProject[activeTab as keyof ProjectData] as string) || ""}
+                onChange={(e) => updateField(activeTab as keyof ProjectData, e.target.value)}
               />
             </div>
           </div>
         </div>
 
-        {/* Right Sidebar - AI Consultant */}
         <div className="w-80 border-l border-border bg-secondary/10 flex flex-col">
           <div className="p-4 border-b border-border flex items-center justify-between bg-background">
             <div className="flex items-center gap-2">
@@ -231,7 +316,7 @@ export default function ProjectPage() {
                 <p className="text-xs text-muted-foreground">
                   No active suggestions. Run a new diagnosis when you've made changes.
                 </p>
-                <Button variant="outline" size="sm" className="mt-4" onClick={handleRunAnalysis}>
+                <Button variant="outline" size="sm" className="mt-4" onClick={handleRunAnalysis} disabled={projectId === "new"}>
                   Run Diagnosis
                 </Button>
               </div>

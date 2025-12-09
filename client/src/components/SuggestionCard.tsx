@@ -1,9 +1,7 @@
 import React, { useState } from "react";
-import { Check, X, MessageSquare, AlertTriangle, Lightbulb, ChevronRight, BookOpen } from "lucide-react";
+import { Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
@@ -13,7 +11,7 @@ interface Suggestion {
   title: string;
   description: string;
   rationale: string;
-  accepted?: boolean;
+  status: string;
 }
 
 export function SuggestionCard({ suggestion, onAccept, onReject }: { 
@@ -23,7 +21,7 @@ export function SuggestionCard({ suggestion, onAccept, onReject }: {
 }) {
   const [expanded, setExpanded] = useState(false);
 
-  if (suggestion.accepted !== undefined) return null;
+  if (suggestion.status !== "pending") return null;
 
   return (
     <Card className={cn(
